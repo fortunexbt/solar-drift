@@ -1,0 +1,17 @@
+{
+  "name": "Solar Drift",
+  "short_name": "Solar Drift",
+  "description": "A warm retro-futurist, browser-native Snake roguelite.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5efe6",
+  "theme_color": "#e4d2b7",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

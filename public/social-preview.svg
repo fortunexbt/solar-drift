@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Solar Drift</title>
+  <desc id="desc">A warm retro-futurist game poster with a teal serpent crossing an amber sunlit grid.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff9ef"/>
+      <stop offset=".55" stop-color="#efe3d1"/>
+      <stop offset="1" stop-color="#d8c2a1"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="45%" r="55%">
+      <stop stop-color="#ffc17d"/>
+      <stop offset="1" stop-color="#f08a4b"/>
+    </radialGradient>
+    <linearGradient id="serpent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#67d5ce"/>
+      <stop offset=".5" stop-color="#1f7f7a"/>
+      <stop offset="1" stop-color="#145653"/>
+    </linearGradient>
+    <pattern id="grid" width="62" height="62" patternUnits="userSpaceOnUse">
+      <path d="M62 0H0v62" fill="none" stroke="#1f7f7a" stroke-opacity=".16" stroke-width="2"/>
+      <circle cx="0" cy="0" r="3" fill="#c25a3a" fill-opacity=".35"/>
+    </pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#56331f" flood-opacity=".25"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#paper)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <circle cx="920" cy="190" r="174" fill="url(#sun)" opacity=".96"/>
+  <circle cx="920" cy="190" r="204" fill="none" stroke="#c25a3a" stroke-opacity=".28" stroke-width="2"/>
+  <path d="M0 494C220 418 348 544 523 453s252-81 380-33 205 44 297-8v218H0Z" fill="#1f7f7a" opacity=".08"/>
+  <path d="M738 495h-92c-56 0-86-36-86-83s-31-82-86-82H342c-47 0-74-31-74-70s-27-68-75-68H88" fill="none" stroke="#503724" stroke-opacity=".19" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M738 478h-92c-56 0-86-36-86-83s-31-82-86-82H342c-47 0-74-31-74-70s-27-68-75-68H88" fill="none" stroke="url(#serpent)" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)"/>
+  <path d="M736 462l54 16-54 16Z" fill="#145653"/>
+  <circle cx="764" cy="477" r="5" fill="#fff9ef"/>
+  <g transform="translate(78 66)">
+    <text x="0" y="0" dominant-baseline="hanging" fill="#c25a3a" font-family="monospace" font-size="19" font-weight="700" letter-spacing="8">SERPENT GRID RUN / SD-01</text>
+    <text x="0" y="62" dominant-baseline="hanging" fill="#173f3d" font-family="Arial, sans-serif" font-size="83" font-weight="800" letter-spacing="7">SOLAR</text>
+    <text x="0" y="145" dominant-baseline="hanging" fill="#1f7f7a" font-family="Arial, sans-serif" font-size="83" font-weight="800" letter-spacing="7">DRIFT</text>
+    <path d="M0 254h390" stroke="#f08a4b" stroke-width="5"/>
+    <text x="0" y="281" dominant-baseline="hanging" fill="#443a30" font-family="Arial, sans-serif" font-size="24" letter-spacing="2">SNAKE, REBUILT AS A BROWSER ROGUELITE.</text>
+  </g>
+  <g transform="translate(78 560)" fill="#173f3d" font-family="monospace" font-size="16" font-weight="700" letter-spacing="3">
+    <text>3 MODES</text>
+    <text x="190">21 MODULES</text>
+    <text x="430">LOCAL PROGRESSION</text>
+    <text x="775">PROCEDURAL AUDIO</text>
+  </g>
+  <rect x="25" y="25" width="1150" height="580" rx="22" fill="none" stroke="#1f7f7a" stroke-opacity=".38" stroke-width="3"/>
+</svg>

@@ -67,7 +67,7 @@ The production build uses a relative Vite base, so the generated `dist/` works f
 
 ## Data and privacy
 
-Solar Drift makes no network request for gameplay data. It stores its meta state under the `neonSnakeMeta` key and its first-run guide state under `solarDriftGuideSeen` in browser `localStorage`. Clearing site data resets that device's progress. The only optional network request is the stylesheet import for Google Fonts; the game falls back to local sans-serif and monospace families if it is unavailable.
+Solar Drift makes no runtime network request after its static assets load. It stores its meta state under the `neonSnakeMeta` key and its first-run guide state under `solarDriftGuideSeen` in browser `localStorage`. Clearing site data resets that device's progress.
 
 ## Audio provenance
 

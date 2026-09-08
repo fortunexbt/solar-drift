@@ -1,11 +1,8 @@
-import './config';
-import './utils';
-import './core';
-import './input';
-import './render';
-import './particles';
-import './entities';
-import './audio';
-import './meta';
-import './ui';
-import './game';
+import './orbit/main'
+import type { LegacyNeonSnake } from './types'
+
+declare global {
+  interface Window {
+    NeonSnake?: Partial<LegacyNeonSnake>
+  }
+}

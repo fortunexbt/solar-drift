@@ -1,84 +1,97 @@
 # Solar Drift
 
-![Solar Drift — a browser-native Snake roguelite](./public/social-preview.svg)
+**Draw an orbit. Cross your wake. Collect the light.**
 
-Solar Drift rebuilds Snake as a warm retro-futurist roguelite. Trace clean lines through a live hazard grid, turn near misses into heat, and choose a new module whenever the run advances a stage.
+![The Solar Drift observatory screen](./docs/images/observatory.webp)
 
-It is a deliberately compact browser game: no account, no backend, no multiplayer, and no paid content. Progress, upgrades, frames, daily targets, and leaderboards stay in `localStorage` on the current device.
+A small orbital arcade game about making a good circle under pressure. Steer a ship around glowing suns, cross the trail you leave behind, and collect everything inside the loop. Bigger catches buy more time—and bring more hazards into your path.
 
-## On the grid
+Canvas 2D · TypeScript · Procedural WebAudio · No account or backend
 
-![Solar Drift gameplay with the serpent crossing its warm, glass-framed hazard grid](./public/gameplay-preview.webp)
+## Your first orbit
 
-## What is in the machine
+Choose **Start a run** to enter the flight area. The ship and clock wait for your first steering input. Hold **←** or the left touch button to curve around the marked sun, then meet your own wake.
 
-- Three distinct run profiles: **Core Drift**, **Rush Loop**, and **Gate Run**.
-- 21 stackable run modules spanning scoring, movement, pickups, recovery, hazards, and overdrive.
-- Seven permanent workshop upgrades purchased with tokens earned on the grid.
-- Five unlockable visual frames with their own palettes.
-- A date-seeded daily target and score-sorted local leaderboard.
-- Near-miss heat, boost, combo chains, power-ups, stage choices, hazards, and revive states.
-- Adaptive visual quality, canvas rendering, particles, post-processing, and spatial cues.
-- A runtime-synthesized WebAudio score and sound effects—no bundled recordings or samples.
-- Keyboard, swipe, and coarse-pointer controls, with a first-run flight manual and live status announcements.
+![The flight area during a first orbit](./docs/images/first-orbit.webp)
+
+Once launched, you always move forward. Your wake lasts **7 seconds**: cross an older part of it to close a loop and capture the suns inside. Surge makes you faster and your turning circle wider.
+
+| What happens | What changes |
+| --- | --- |
+| Begin a flight | **60 seconds** on the clock |
+| Enclose suns in a loop | Collect light and **+3 seconds per sun**, up to 90 seconds remaining |
+| Capture again within 9 seconds | Grow the scoring chain, up to **×4** |
+| Close an empty orbit | Clear the loop and reset the chain |
+| Hit a red body or the edge | Lose **5 seconds**, your wake, and your chain |
+| Pass close to a red body | Recharge your surge |
+| Keep collecting | More red bodies enter the arena, up to **six** |
+
+Light per capture is **100 × suns² × chain multiplier**. At ×1, one sun earns 100, two together earn 400, and three together earn 900. The reward is for enclosing them in the **same loop**.
 
 ## Controls
 
-| Action | Keyboard | Touch |
+| Action | Keyboard | Pointer / touch |
 | --- | --- | --- |
-| Steer | Arrow keys or `W` `A` `S` `D` | Swipe the grid or use the direction pad |
-| Boost | `Shift`, `E`, or `B` | **Boost** button |
-| Pause / resume | `Space` or `Escape` | Pause button |
-| Choose a module | `1`–`3`, arrows, then `Enter` or `Space` | Tap a module |
-| Toggle sound | `M` or the speaker button | Speaker button |
-| Toggle FPS readout | `F` | — |
+| Steer | **← / →** or **A / D** | Hold and drag on the flight area to aim; use **↶ / ↷** on mobile |
+| Surge | Hold **Space**, **Shift**, **↑**, or **W** | Hold **Surge** |
+| Pause / resume | **Escape** | **Pause**, then **Resume flight** |
+| Toggle sound | **M** | **Sound** |
+| Read the guide | Tab to **?**, then Enter | Tap **?** |
 
-## Run it locally
+Sound begins only after a user interaction. Headphones suit the quiet motion bed and glass-like capture notes.
 
-Solar Drift requires Node.js 20.19 or newer.
+## Run locally
+
+Use **Node.js 20.19 or newer**.
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite. Before sending a change, run the same complete check used in CI:
+Open the local URL printed by Vite. To check a change:
 
 ```bash
 npm run check
 ```
 
-That command type-checks the TypeScript, runs the deterministic unit suite, and creates the production bundle.
+This runs TypeScript checking, the Vitest suite, and a production build. The suite includes orbital geometry and gameplay rules alongside the retained tests for the earlier game.
 
-## Architecture
+| Command | Purpose |
+| --- | --- |
+| `npm run typecheck` | Check TypeScript without emitting files |
+| `npm test` | Run the test suite once |
+| `npm run test:watch` | Run tests while developing |
+| `npm run build` | Build the static site into `dist/` |
+| `npm run preview` | Serve the production build locally |
 
-| Area | Source | Responsibility |
-| --- | --- | --- |
-| Runtime | `src/game.ts` | Run lifecycle, progression, collision rules, scoring, pause state, and screen orchestration |
-| Entities | `src/entities/` | Snake, food, power-ups, and hazards |
-| Rendering | `src/render.ts`, `src/particles.ts` | Canvas drawing, glow/post effects, backdrop, and particles |
-| Input | `src/input/InputManager.ts` | Keyboard, pointer, touch-pad, and swipe normalization |
-| Sound | `src/audio.ts` | Procedural music voices, effects, ducking, and spatial WebAudio cues |
-| Meta layer | `src/meta.ts` | Local progression, upgrades, daily target, leaderboard ordering, and run-summary codes |
-| Configuration | `src/config.ts` | Modes, frames, upgrades, modules, tuning, and quality tiers |
-| Interface | `index.html`, `src/ui.ts` | Responsive screens, semantic controls, HUD, onboarding, and announcements |
+## Inside the game
 
-The production build uses a relative Vite base, so the generated `dist/` works from a GitHub project Pages path as well as a local static server.
+| Source | Responsibility |
+| --- | --- |
+| [`src/main.ts`](./src/main.ts) | Entry point for the orbital game |
+| [`src/orbit/main.ts`](./src/orbit/main.ts) | Flight lifecycle, input, UI updates, sound events, and local preferences |
+| [`src/orbit/physics.ts`](./src/orbit/physics.ts) | Movement, wake closure, polygon capture, scoring, charge, and hazards |
+| [`src/orbit/render.ts`](./src/orbit/render.ts) | Canvas drawing for the observatory, ship, suns, trails, and captured orbits |
+| [`src/orbit/audio.ts`](./src/orbit/audio.ts) | Synthesized motion bed and bounded, tuned sound effects |
+| [`src/orbit/style.css`](./src/orbit/style.css) · [`index.html`](./index.html) | Responsive interface, controls, guide, and run summaries |
+| [`src/orbit/physics.test.ts`](./src/orbit/physics.test.ts) | Geometry and gameplay checks |
 
-## Data and privacy
+The runtime lives in `src/orbit/`. The original Snake modules remain elsewhere in `src/` with their tests, but are not imported by the current game entry point. Their upgrades, modes, and progression are not features of this version.
 
-Solar Drift makes no runtime network request after its static assets load. It stores its meta state under the `neonSnakeMeta` key and its first-run guide state under `solarDriftGuideSeen` in browser `localStorage`. Clearing site data resets that device's progress.
+This redesign is being developed on `fortune/orbital-lasso`. The screenshots show the local build; they do not indicate a published release.
 
-## Audio provenance
+## Data, sound, and credits
 
-The project intentionally ships no third-party music, recordings, or samples. Its score and effects are generated at runtime with the Web Audio API from oscillators, filtered noise, envelopes, delay, and panning. This keeps the repository reproducible and the asset rights unambiguous.
+The game runs in the browser. It has no account system, analytics, server-side score storage, external font dependency, or runtime service to contact. Browser storage is optional; a run still works when storage is unavailable.
 
-## Deploying to GitHub Pages
+| Local storage key | Saved value |
+| --- | --- |
+| `solarDriftOrbitBest` | Best orbital-game score on this browser |
+| `solarDriftOrbitSound` | Sound preference |
 
-The Pages workflow builds and verifies every push to `main`, uploads `dist/`, and deploys it through GitHub's official Pages actions. In the repository settings, select **GitHub Actions** as the Pages source; no committed build folder is required.
+The earlier Snake game's storage is left untouched. Clearing this site's browser data removes its saved scores and preferences; nothing syncs across devices.
 
-Pull requests and pushes to `main` also run the independent test workflow. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development contract.
+Made by **Fortune**. The game visuals are drawn procedurally, and the audio is synthesized with the Web Audio API. No third-party recordings, samples, or font files are bundled for the orbital game.
 
-## License
-
-Solar Drift is released under the [MIT License](./LICENSE).
+Code and original assets are available under the [MIT License](./LICENSE).

@@ -2,7 +2,7 @@
   "name": "solar-drift",
   "private": true,
   "version": "1.0.0",
-  "description": "A warm retro-futurist, browser-native Snake roguelite.",
+  "description": "An orbital arcade game. Draw a loop, cross your wake, capture the suns inside.",
   "license": "MIT",
   "engines": {
     "node": ">=20.19"

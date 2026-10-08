@@ -2,6 +2,8 @@
 
 **Draw an orbit. Cross your wake. Collect the light.**
 
+**[Play in the browser](https://fortunexbt.github.io/solar-drift/)**
+
 ![The Solar Drift observatory screen](./docs/images/observatory.webp)
 
 A small orbital arcade game about making a good circle under pressure. Steer a ship around glowing suns, cross the trail you leave behind, and collect everything inside the loop. Bigger catches buy more time—and bring more hazards into your path.

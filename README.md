@@ -57,7 +57,7 @@ Open the local URL printed by Vite. To check a change:
 npm run check
 ```
 
-This runs TypeScript checking, the Vitest suite, and a production build. The suite includes orbital geometry and gameplay rules alongside the retained tests for the earlier game.
+This runs TypeScript checking, the Vitest suite, and a production build. The suite covers orbital geometry and gameplay rules.
 
 | Command | Purpose |
 | --- | --- |
@@ -79,9 +79,7 @@ This runs TypeScript checking, the Vitest suite, and a production build. The sui
 | [`src/orbit/style.css`](./src/orbit/style.css) · [`index.html`](./index.html) | Responsive interface, controls, guide, and run summaries |
 | [`src/orbit/physics.test.ts`](./src/orbit/physics.test.ts) | Geometry and gameplay checks |
 
-The runtime lives in `src/orbit/`. The original Snake modules remain elsewhere in `src/` with their tests, but are not imported by the current game entry point. Their upgrades, modes, and progression are not features of this version.
-
-This redesign is being developed on `fortune/orbital-lasso`. The screenshots show the local build; they do not indicate a published release.
+The runtime lives in `src/orbit/`.
 
 ## Data, sound, and credits
 
@@ -92,7 +90,7 @@ The game runs in the browser. It has no account system, analytics, server-side s
 | `solarDriftOrbitBest` | Best orbital-game score on this browser |
 | `solarDriftOrbitSound` | Sound preference |
 
-The earlier Snake game's storage is left untouched. Clearing this site's browser data removes its saved scores and preferences; nothing syncs across devices.
+Clearing this site's browser data removes its saved scores and preferences; nothing syncs across devices.
 
 Made by **Fortune**. The game visuals are drawn procedurally, and the audio is synthesized with the Web Audio API. No third-party recordings, samples, or font files are bundled for the orbital game.
 

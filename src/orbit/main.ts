@@ -1,6 +1,6 @@
 import { OrbitAudio } from './audio'
-import { OrbitGame, type Controls } from './physics'
-import { OrbitRenderer } from './render'
+import { OrbitGame, createAutopilot, type Controls, type Point } from './physics'
+import { OrbitRenderer, type View } from './render'
 import './style.css'
 
 function element<T extends HTMLElement>(id: string): T {
@@ -15,10 +15,15 @@ const controls: Controls = { turn: 0, target: null, boost: false }
 const keys = new Set<string>()
 const guide = element<HTMLDialogElement>('guide')
 let game = new OrbitGame(innerWidth, innerHeight)
+let demo = game
+let pilot = createAutopilot()
+let demoView: View | null = null
+let demoRuns = 0
+let runSuns: Point[] = []
 let mode: 'ready' | 'playing' | 'paused' | 'ended' = 'ready'
-let muted = false
+let muted = true
 let best = 0
-try { muted = localStorage.getItem('solarDriftOrbitSound') === 'off'; best = Number(localStorage.getItem('solarDriftOrbitBest')) || 0 } catch { /* The game also works without persistent storage. */ }
+try { muted = localStorage.getItem('solarDriftOrbitSound') !== 'on'; best = Number(localStorage.getItem('solarDriftOrbitBest')) || 0 } catch { /* The game also works without persistent storage. */ }
 audio.setMuted(muted)
 let feedbackUntil = 0
 let feedbackText = ''
@@ -38,20 +43,69 @@ function feedback(text: string, duration = 2200) {
   feedbackText = text; feedbackUntil = performance.now() + duration
   element('feedback').textContent = text; element('feedback').classList.add('visible')
 }
+/** Seeded so every visitor sees the same short lesson flight. */
+function seeded(seed: number) {
+  return () => (seed = seed * 16807 % 2147483647) / 2147483647
+}
+/** Fit the title-screen demo into the space the welcome copy leaves free. */
+function newDemo() {
+  const w = innerWidth, h = innerHeight
+  const title = element('welcome').querySelector('h1')!.getBoundingClientRect()
+  const copyBottom = Math.max(...['start', 'start-note'].map(id => element(id).getBoundingClientRect().bottom))
+  const area = w >= 700 ? { x: Math.max(title.right + 80, w * .45), y: 96 } : { x: 20, y: copyBottom + 24 }
+  const width = w - area.x - (w >= 700 ? 40 : 20), height = h - area.y - (w >= 700 ? 120 : 96)
+  // Drawn larger than play scale so the lesson reads at a glance.
+  const scale = w >= 700 ? 1.5 : 1.25
+  demoView = width >= 240 && height >= 170 && h >= 500 ? { ...area, scale } : null
+  pilot = createAutopilot()
+  demo = new OrbitGame(Math.max(240, width) / scale, Math.max(170, height) / scale, seeded([7, 8, 10][demoRuns++ % 3]), { top: 0, bottom: 0 })
+}
 function resetControls() {
   keys.clear(); controls.turn = 0; controls.boost = false; controls.target = null; pointerSteering = false; turnTouch = 0; boostTouch = false
   document.querySelectorAll('.touch-controls .active').forEach(el => el.classList.remove('active'))
 }
 function saveBest() {
+  const record = game.score > best
   best = Math.max(best, game.score)
   try { localStorage.setItem('solarDriftOrbitBest', String(best)) } catch { /* No storage is required for a run. */ }
+  return record
+}
+/** Draws every loop that captured light this run, framed around where the flying happened. */
+function drawRunMap() {
+  const map = element('run-map'), points = [...game.history.flat(), ...runSuns]
+  const xs = points.map(p => p.x), ys = points.map(p => p.y)
+  const span = Math.max(game.width * .35, Math.max(...xs) - Math.min(...xs) + 60, (Math.max(...ys) - Math.min(...ys) + 60) * 2.5)
+  const cx = points.length ? (Math.max(...xs) + Math.min(...xs)) / 2 : game.width / 2, cy = points.length ? (Math.max(...ys) + Math.min(...ys)) / 2 : (game.top + game.bottom) / 2
+  map.setAttribute('viewBox', `${Math.round(cx - span / 2)} ${Math.round(cy - span / 5)} ${Math.round(span)} ${Math.round(span / 2.5)}`)
+  const loops = game.history.map((loop, i) => {
+    const opacity = (.35 + .65 * (i + 1) / game.history.length).toFixed(2)
+    return `<polygon points="${loop.map(p => `${Math.round(p.x)},${Math.round(p.y)}`).join(' ')}" opacity="${opacity}" />`
+  })
+  const suns = runSuns.map(p => `<circle cx="${Math.round(p.x)}" cy="${Math.round(p.y)}" r="${(span / 110).toFixed(1)}" />`)
+  map.innerHTML = loops.join('') + suns.join('')
+  const count = game.history.length
+  element('map-caption').textContent = count ? `${count} ORBIT${count === 1 ? '' : 'S'} THAT CAUGHT LIGHT` : 'NO SUNS CAUGHT THIS RUN'
+}
+async function share() {
+  const url = location.origin + location.pathname
+  const text = `I collected ${game.score.toLocaleString()} light in Solar Drift: ${game.captured} sun${game.captured === 1 ? '' : 's'}, best chain ×${game.bestCombo}. Can you close a bigger orbit?`
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Solar Drift', text, url }) } catch (error) { if ((error as DOMException).name !== 'AbortError') throw error }
+    return
+  }
+  await navigator.clipboard.writeText(`${text} ${url}`)
+  element('share').textContent = 'Copied to clipboard'
+  setTimeout(() => { element('share').textContent = 'Share this run' }, 2000)
+}
+function bump(id: string) {
+  if (reduced.matches) return
+  element(id).animate([{ transform: 'scale(1.14)', color: '#ffe0af' }, { transform: 'scale(1)' }], { duration: 320, easing: 'cubic-bezier(.23, 1, .32, 1)' })
 }
 function soundUI() {
   element('sound').innerHTML = `SOUND <span>${muted ? 'OFF' : 'ON'}</span>`
-  element('sound').setAttribute('aria-label', muted ? 'Turn sound on' : 'Turn sound off')
   element('sound').setAttribute('aria-pressed', String(!muted))
 }
-function setMode(next: typeof mode) {
+function setMode(next: typeof mode, record = false) {
   mode = next; document.body.classList.toggle('playing', mode === 'playing')
   element('welcome').hidden = mode !== 'ready'
   element('hud').hidden = mode === 'ready'
@@ -66,14 +120,17 @@ function setMode(next: typeof mode) {
     element('result-label').textContent = 'FLIGHT ON HOLD'
     element('result-title').innerHTML = 'Take your<br /><em>time.</em>'
     element('result-note').textContent = 'Your orbit is right where you left it.'
-    element('result-stats').hidden = true; element('resume').hidden = false; element('restart').hidden = true
+    element('result-stats').hidden = true; element('run-record').hidden = true; element('share').hidden = true; element('resume').hidden = false; element('restart').hidden = true
     element('resume').focus()
   }
   if (mode === 'ended') {
-    element('result-label').textContent = 'FLIGHT RECORDED'
+    element('result-label').textContent = record ? 'NEW PERSONAL BEST' : 'FLIGHT RECORDED'
     element('result-title').innerHTML = game.score ? 'A little<br /><em>more light.</em>' : 'Find your<br /><em>first orbit.</em>'
-    element('result-note').textContent = game.score ? 'Try enclosing two suns in one orbit. The reward grows with the risk.' : 'Hold the left arrow at the start. Circle the marked sun and meet your own wake.'
-    element('result-stats').hidden = false; element('resume').hidden = true; element('restart').hidden = false
+    element('result-note').textContent = !game.score ? 'Hold the left arrow at the start. Circle the marked sun and meet your own wake.'
+      : runSuns.length === game.history.length ? 'Try enclosing two suns in one orbit. Two together earn four times the light.'
+        : game.bestCombo < 4 ? 'Catch again within 9 seconds of the last capture to build the chain to ×4.' : 'Full chain. Next, try three suns in a single loop.'
+    element('result-stats').hidden = false; element('run-record').hidden = false; element('share').hidden = !game.score; element('resume').hidden = true; element('restart').hidden = false
+    drawRunMap()
     element('final-score').textContent = game.score.toLocaleString(); element('final-suns').textContent = String(game.captured); element('final-chain').textContent = `×${game.bestCombo}`
     element('restart').focus()
   }
@@ -82,6 +139,7 @@ function setMode(next: typeof mode) {
 async function start() {
   game = new OrbitGame(innerWidth, innerHeight)
   const currentRun = game
+  runSuns = []; renderer.clearEffects()
   feedbackText = ''; feedbackUntil = 0; element('feedback').textContent = ''; element('feedback').classList.remove('visible')
   setMode('playing')
   await audio.unlock()
@@ -113,21 +171,28 @@ function frame(now: number) {
     controls.boost = boostTouch || keys.has(' ') || keys.has('Shift') || keys.has('ArrowUp') || keys.has('w')
     const events = game.step(dt, controls)
     for (const event of events) {
-      if (event.type === 'capture') { audio.capture(event.count, event.combo); feedback(`${event.count} SUN${event.count === 1 ? '' : 'S'} CAPTURED  ·  +${event.score} LIGHT  ·  +${event.count * 3}s`); if (navigator.vibrate) navigator.vibrate(18) }
+      if (event.type === 'capture') { audio.capture(event.count, event.combo); renderer.burst(event.suns, reduced.matches); runSuns.push(...event.suns); bump('score'); bump('time'); feedback(`${event.count} SUN${event.count === 1 ? '' : 'S'} CAPTURED  ·  +${event.score} LIGHT  ·  +${event.count * 3}s`); if (navigator.vibrate) navigator.vibrate(18) }
       else if (event.type === 'empty') feedback('EMPTY ORBIT. KEEP A SUN INSIDE.', 1700)
-      else if (event.type === 'hit') { audio.hit(); feedback('WAKE LOST  ·  −5s', 1800); if (navigator.vibrate) navigator.vibrate([15, 35, 20]) }
+      else if (event.type === 'hit') { audio.hit(); renderer.shake(); feedback('WAKE LOST  ·  −5s', 1800); if (navigator.vibrate) navigator.vibrate([15, 35, 20]) }
       else if (event.type === 'near') { audio.nearMiss(); feedback('CLOSE PASS  ·  SURGE RECHARGED', 1200) }
-      else if (event.type === 'end') { saveBest(); audio.end(); setMode('ended') }
+      else if (event.type === 'end') { audio.end(); setMode('ended', saveBest()) }
     }
     audio.setMotion(game.ship.speed / game.speed, controls.boost && game.charge > 2)
   }
-  renderer.draw(game, now / 1000, mode, reduced.matches)
+  if (mode === 'ready' && demoView) {
+    // The lesson flight only shows suns and the wake, so red bodies never spawn in it.
+    demo.hazards = []
+    for (const event of demo.step(dt, pilot(demo))) if (event.type === 'capture') renderer.burst(event.suns.map(p => ({ x: demoView!.x + p.x * demoView!.scale, y: demoView!.y + p.y * demoView!.scale })), reduced.matches)
+    if (demo.elapsed > 16 && !demo.orbits.length) newDemo()
+  }
+  if (mode === 'ready') renderer.draw(demo, now / 1000, mode, reduced.matches, demoView)
+  else renderer.draw(game, now / 1000, mode, reduced.matches)
   if (now - lastUI > 100) { updateUI(); lastUI = now }
   if (!document.hidden) raf = requestAnimationFrame(frame)
 }
 function resize() {
   renderer.resize(innerWidth, innerHeight)
-  if (mode === 'ready') game = new OrbitGame(innerWidth, innerHeight)
+  if (mode === 'ready') newDemo()
   else game.resize(innerWidth, innerHeight)
 }
 canvas.tabIndex = -1
@@ -135,7 +200,8 @@ element('start').addEventListener('click', () => void start(), options)
 element('restart').addEventListener('click', () => void start(), options)
 element('pause').addEventListener('click', pause, options)
 element('resume').addEventListener('click', resume, options)
-element('back').addEventListener('click', () => { saveBest(); audio.end(); game = new OrbitGame(innerWidth, innerHeight); setMode('ready'); element('start').focus() }, options)
+element('back').addEventListener('click', () => { saveBest(); audio.end(); setMode('ready'); newDemo(); element('start').focus() }, options)
+element('share').addEventListener('click', () => void share(), options)
 element('sound').addEventListener('click', async () => {
   muted = !muted; audio.setMuted(muted); soundUI()
   try { localStorage.setItem('solarDriftOrbitSound', muted ? 'off' : 'on') } catch { /* Optional preference. */ }

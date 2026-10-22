@@ -2,19 +2,21 @@
 
 **Draw an orbit. Cross your wake. Collect the light.**
 
-**[Play in the browser](https://fortunexbt.github.io/solar-drift/)**
+**Live demo: [solar-drift-zeta.vercel.app](https://solar-drift-zeta.vercel.app/)** (also on [GitHub Pages](https://fortunexbt.github.io/solar-drift/))
 
-![The Solar Drift observatory screen](./docs/images/observatory.webp)
+![The Solar Drift title screen, with the lesson flight looping a sun](./docs/images/title.webp)
 
-A small orbital arcade game about making a good circle under pressure. Steer a ship around glowing suns, cross the trail you leave behind, and collect everything inside the loop. Bigger catches buy more time—and bring more hazards into your path.
+A small orbital arcade game about flying a good circle under pressure. Your ship always moves forward. Loop it around a glowing sun, cross the wake you left behind, and every sun inside the loop is yours. Bigger loops catch more suns and buy more time, and more red bodies drift into the arena as you go.
 
-Canvas 2D · TypeScript · Procedural WebAudio · No account or backend
+The title screen teaches the whole thing in about five seconds: a seeded pilot loops a sun, crosses its wake and catches it while a three-step caption follows along. One click or tap on **Start a run** puts you in the same situation.
+
+Canvas 2D, TypeScript and procedural Web Audio. No account, no backend, no network calls during play.
 
 ## Your first orbit
 
 Choose **Start a run** to enter the flight area. The ship and clock wait for your first steering input. Hold **←** or the left touch button to curve around the marked sun, then meet your own wake.
 
-![The flight area during a first orbit](./docs/images/first-orbit.webp)
+<img src="./docs/images/phone.webp" alt="The title screen on an iPhone-sized display" width="300" />
 
 Once launched, you always move forward. Your wake lasts **7 seconds**: cross an older part of it to close a loop and capture the suns inside. Surge makes you faster and your turning circle wider.
 
@@ -40,7 +42,13 @@ Light per capture is **100 × suns² × chain multiplier**. At ×1, one sun earn
 | Toggle sound | **M** | **Sound** |
 | Read the guide | Tab to **?**, then Enter | Tap **?** |
 
-Sound begins only after a user interaction. Headphones suit the quiet motion bed and glass-like capture notes.
+Sound is off until you turn it on, and the choice is remembered. Headphones suit the quiet motion bed and glass-like capture notes.
+
+## After a run
+
+The result screen shows your light, suns and best chain, plus a map of every loop that caught a sun, with the captured suns marked. **Share this run** opens the system share sheet where there is one (iPhone, Android, Safari) and copies a short line with the link everywhere else. Beating your best on this browser is called out at the top.
+
+<img src="./docs/images/run-map.webp" alt="The result screen with the run map" width="720" />
 
 ## Run locally
 
@@ -73,13 +81,19 @@ This runs TypeScript checking, the Vitest suite, and a production build. The sui
 | --- | --- |
 | [`src/main.ts`](./src/main.ts) | Entry point for the orbital game |
 | [`src/orbit/main.ts`](./src/orbit/main.ts) | Flight lifecycle, input, UI updates, sound events, and local preferences |
-| [`src/orbit/physics.ts`](./src/orbit/physics.ts) | Movement, wake closure, polygon capture, scoring, charge, and hazards |
-| [`src/orbit/render.ts`](./src/orbit/render.ts) | Canvas drawing for the observatory, ship, suns, trails, and captured orbits |
+| [`src/orbit/physics.ts`](./src/orbit/physics.ts) | Movement, wake closure, polygon capture, scoring, charge, hazards, and the title-screen pilot |
+| [`src/orbit/render.ts`](./src/orbit/render.ts) | Canvas drawing for the ship, suns, trails, captured orbits, capture sparks, hit shake, and the lesson caption |
 | [`src/orbit/audio.ts`](./src/orbit/audio.ts) | Synthesized motion bed and bounded, tuned sound effects |
 | [`src/orbit/style.css`](./src/orbit/style.css) · [`index.html`](./index.html) | Responsive interface, controls, guide, and run summaries |
 | [`src/orbit/physics.test.ts`](./src/orbit/physics.test.ts) | Geometry and gameplay checks |
 
-The runtime lives in `src/orbit/`.
+The runtime lives in `src/orbit/`. The title-screen demo is the real simulation, not a recording: it runs `OrbitGame` with a seeded random source and steers it with `createAutopilot()`.
+
+## Limits
+
+- Scores live in this browser only. There is no online leaderboard, so sharing sends a line of text and a link, not a verifiable score.
+- Phones held in landscape at under 500px tall skip the title-screen demo; the game itself still plays.
+- With reduced motion turned on, the lesson flight still plays (it is the explanation), but sparks, screen shake and star twinkle are off.
 
 ## Data, sound, and credits
 

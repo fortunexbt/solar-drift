@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { OrbitGame, hudMargins, loopScore, nearestPoint, pointInPolygon, polygonArea } from './physics'
+import { OrbitGame, autopilot, hudMargins, loopScore, nearestPoint, pointInPolygon, polygonArea } from './physics'
 
 describe('orbit geometry', () => {
   const square = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }]
@@ -80,5 +80,11 @@ describe('playable orbit rules', () => {
     expect(capture?.suns).toHaveLength(capture?.count ?? -1)
     expect(game.history).toHaveLength(game.loops)
     expect(game.history[0].length).toBeGreaterThan(2)
+  })
+  it('flies the title-screen autopilot into repeated captures', () => {
+    const game = new OrbitGame(800, 420, () => .2, { top: 0, bottom: 0 })
+    game.hazards = []
+    for (let i = 0; i < 60 * 20; i++) game.step(1 / 60, autopilot(game))
+    expect(game.loops).toBeGreaterThanOrEqual(3)
   })
 })

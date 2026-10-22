@@ -1,17 +1,13 @@
 {
   "name": "Solar Drift",
   "short_name": "Solar Drift",
-  "description": "A warm retro-futurist, browser-native Snake roguelite.",
+  "description": "An orbital arcade game. Draw a loop around a sun, cross your wake and collect the light.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f5efe6",
-  "theme_color": "#e4d2b7",
+  "background_color": "#080e17",
+  "theme_color": "#080e17",
   "icons": [
-    {
-      "src": "./favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
   ]
 }

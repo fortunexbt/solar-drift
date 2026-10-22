@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { OrbitGame, loopScore, nearestPoint, pointInPolygon, polygonArea } from './physics'
+import { OrbitGame, createAutopilot, hudMargins, loopScore, nearestPoint, pointInPolygon, polygonArea } from './physics'
 
 describe('orbit geometry', () => {
   const square = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }]
@@ -64,5 +64,28 @@ describe('playable orbit rules', () => {
     expect(game.suns.every(sun => sun.y > game.top && sun.y < game.bottom)).toBe(true)
     game.resize(320, 568)
     expect(game.suns.every(sun => sun.x > 0 && sun.x < 320 && sun.y > game.top && sun.y < game.bottom)).toBe(true)
+  })
+  it('uses tighter margins on wide screens and honours custom ones', () => {
+    expect(hudMargins(390).top).toBeGreaterThan(hudMargins(1280).top)
+    const game = new OrbitGame(1280, 800, () => .2, { top: 20, bottom: 20 })
+    expect(game.top).toBe(20)
+    expect(game.bottom).toBe(780)
+  })
+  it('reports captured sun positions and records each captured loop', () => {
+    const game = new OrbitGame(1280, 800, () => .2)
+    game.started = true
+    const events = []
+    for (let i = 0; i < 150; i++) events.push(...game.step(1 / 60, { turn: -1, target: null, boost: false }))
+    const capture = events.find(event => event.type === 'capture')
+    expect(capture?.suns).toHaveLength(capture?.count ?? -1)
+    expect(game.history).toHaveLength(game.loops)
+    expect(game.history[0].length).toBeGreaterThan(2)
+  })
+  it('flies the title-screen autopilot into repeated captures', () => {
+    const game = new OrbitGame(800, 420, () => .2, { top: 0, bottom: 0 })
+    game.hazards = []
+    const pilot = createAutopilot()
+    for (let i = 0; i < 60 * 20; i++) game.step(1 / 60, pilot(game))
+    expect(game.loops).toBeGreaterThanOrEqual(3)
   })
 })

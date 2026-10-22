@@ -1,6 +1,6 @@
 import { OrbitAudio } from './audio'
-import { OrbitGame, autopilot, type Controls, type Point } from './physics'
-import { OrbitRenderer } from './render'
+import { OrbitGame, createAutopilot, type Controls, type Point } from './physics'
+import { OrbitRenderer, type View } from './render'
 import './style.css'
 
 function element<T extends HTMLElement>(id: string): T {
@@ -16,7 +16,8 @@ const keys = new Set<string>()
 const guide = element<HTMLDialogElement>('guide')
 let game = new OrbitGame(innerWidth, innerHeight)
 let demo = game
-let demoOffset: Point | null = null
+let pilot = createAutopilot()
+let demoView: View | null = null
 let demoRuns = 0
 let runSuns: Point[] = []
 let mode: 'ready' | 'playing' | 'paused' | 'ended' = 'ready'
@@ -53,8 +54,11 @@ function newDemo() {
   const copyBottom = Math.max(...['start', 'start-note'].map(id => element(id).getBoundingClientRect().bottom))
   const area = w >= 700 ? { x: Math.max(title.right + 80, w * .45), y: 96 } : { x: 20, y: copyBottom + 24 }
   const width = w - area.x - (w >= 700 ? 40 : 20), height = h - area.y - (w >= 700 ? 120 : 96)
-  demoOffset = width >= 240 && height >= 170 && h >= 500 ? area : null
-  demo = new OrbitGame(Math.max(240, width), Math.max(170, height), seeded(7 + demoRuns++ % 5), { top: 0, bottom: 0 })
+  // Drawn larger than play scale so the lesson reads at a glance.
+  const scale = w >= 700 ? 1.5 : 1.25
+  demoView = width >= 240 && height >= 170 && h >= 500 ? { ...area, scale } : null
+  pilot = createAutopilot()
+  demo = new OrbitGame(Math.max(240, width) / scale, Math.max(170, height) / scale, seeded([7, 8, 10][demoRuns++ % 3]), { top: 0, bottom: 0 })
 }
 function resetControls() {
   keys.clear(); controls.turn = 0; controls.boost = false; controls.target = null; pointerSteering = false; turnTouch = 0; boostTouch = false
@@ -174,13 +178,13 @@ function frame(now: number) {
     }
     audio.setMotion(game.ship.speed / game.speed, controls.boost && game.charge > 2)
   }
-  if (mode === 'ready' && demoOffset) {
+  if (mode === 'ready' && demoView) {
     // The lesson flight only shows suns and the wake, so red bodies never spawn in it.
     demo.hazards = []
-    for (const event of demo.step(dt, autopilot(demo))) if (event.type === 'capture') renderer.burst(event.suns.map(p => ({ x: p.x + demoOffset!.x, y: p.y + demoOffset!.y })), reduced.matches)
+    for (const event of demo.step(dt, pilot(demo))) if (event.type === 'capture') renderer.burst(event.suns.map(p => ({ x: demoView!.x + p.x * demoView!.scale, y: demoView!.y + p.y * demoView!.scale })), reduced.matches)
     if (demo.elapsed > 16 && !demo.orbits.length) newDemo()
   }
-  if (mode === 'ready') renderer.draw(demo, now / 1000, mode, reduced.matches, demoOffset)
+  if (mode === 'ready') renderer.draw(demo, now / 1000, mode, reduced.matches, demoView)
   else renderer.draw(game, now / 1000, mode, reduced.matches)
   if (now - lastUI > 100) { updateUI(); lastUI = now }
   if (!document.hidden) raf = requestAnimationFrame(frame)

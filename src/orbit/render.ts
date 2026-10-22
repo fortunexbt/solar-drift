@@ -1,6 +1,7 @@
 import type { OrbitGame, Point } from './physics'
 
 const TAU = Math.PI * 2
+export interface View extends Point { scale: number }
 const LESSON = ['CIRCLE A SUN', 'CROSS YOUR WAKE', 'KEEP THE LIGHT']
 function path(ctx: CanvasRenderingContext2D, points: Point[]) {
   ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))
@@ -41,16 +42,16 @@ export class OrbitRenderer {
   }
   shake() { this.shakeLeft = .32 }
   clearEffects() { this.sparks = []; this.rings = []; this.shakeLeft = 0 }
-  /** `offset` places the world on screen; the title screen passes null when there is no room for its demo. */
-  draw(game: OrbitGame, time: number, mode: string, reduced: boolean, offset: Point | null = { x: 0, y: 0 }) {
+  /** `view` places and scales the world on screen; the title screen passes null when there is no room for its demo. */
+  draw(game: OrbitGame, time: number, mode: string, reduced: boolean, view: View | null = { x: 0, y: 0, scale: 1 }) {
     const c = this.ctx, w = this.width, h = this.height
     const dt = Math.min(.05, Math.max(0, time - this.lastTime)); this.lastTime = time
     c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
     c.globalAlpha = 1; c.fillStyle = '#080e17'; c.fillRect(0, 0, w, h)
     this.shakeLeft = Math.max(0, this.shakeLeft - dt)
     if (this.shakeLeft && !reduced) { const k = this.shakeLeft * 22; c.translate((Math.random() - .5) * k, (Math.random() - .5) * k) }
-    const origin = offset ?? { x: 0, y: 0 }
-    const cx = origin.x + game.width * .57, cy = origin.y + (game.top + game.bottom) / 2
+    const origin = view ?? { x: 0, y: 0, scale: 1 }
+    const cx = origin.x + game.width * .57 * origin.scale, cy = origin.y + (game.top + game.bottom) / 2 * origin.scale
     const ambient = c.createRadialGradient(cx, cy, 20, cx, cy, Math.max(w, h) * .7)
     ambient.addColorStop(0, '#152a31'); ambient.addColorStop(.45, '#0e1b25'); ambient.addColorStop(1, '#080e17')
     c.fillStyle = ambient; c.fillRect(-20, -20, w + 40, h + 40)
@@ -65,8 +66,8 @@ export class OrbitRenderer {
     for (let i = 0; i < 16; i++) {
       const a = TAU * i / 16; c.beginPath(); c.moveTo(cx + Math.cos(a) * 28, cy + Math.sin(a) * 28); c.lineTo(cx + Math.cos(a) * 1600, cy + Math.sin(a) * 1600); c.stroke()
     }
-    if (!offset) return
-    c.save(); c.translate(offset.x, offset.y)
+    if (!view) return
+    c.save(); c.translate(view.x, view.y); c.scale(view.scale, view.scale)
     if (mode !== 'ready') {
       c.strokeStyle = '#9eb6b51a'; c.setLineDash([2, 8]); c.beginPath(); c.moveTo(20, game.top); c.lineTo(game.width - 20, game.top); c.moveTo(20, game.bottom); c.lineTo(game.width - 20, game.bottom); c.stroke(); c.setLineDash([])
     }
@@ -77,8 +78,8 @@ export class OrbitRenderer {
       c.fillText('YOUR FIRST SUN', sx, sy + 36); c.letterSpacing = '0px'
       c.strokeStyle = '#a8d8c82a'; c.setLineDash([3, 7]); c.beginPath(); c.arc(sx, sy, game.radius, 0, TAU); c.stroke(); c.setLineDash([])
     }
-    if (mode === 'ready') this.drawLesson(game)
     c.restore()
+    if (mode === 'ready') this.drawLesson(game, view)
     this.drawEffects(dt)
   }
   private drawWorld(game: OrbitGame, time: number, reduced: boolean) {
@@ -116,17 +117,17 @@ export class OrbitRenderer {
     this.drawShip(game.ship.x, game.ship.y, game.ship.angle, time, game.ship.speed / game.speed, game.invulnerable > 0)
   }
   /** The three-step caption under the title-screen demo, lit to match what the pilot is doing. */
-  private drawLesson(game: OrbitGame) {
+  private drawLesson(game: OrbitGame, view: View) {
     const c = this.ctx
     const lap = game.trail.length * 3 / (TAU * game.radius * 1.3)
     const step = game.orbits.some(orbit => orbit.count && orbit.age < 1.4) ? 2 : lap > .62 ? 1 : 0
-    const y = game.height + 26
+    const y = view.y + game.height * view.scale + 26, width = game.width * view.scale
     c.font = '11px ui-monospace, monospace'; c.letterSpacing = '2px'; c.textAlign = 'left'
     const steps = LESSON.map((text, i) => `${i + 1}  ${text}`)
-    if (game.width < 520) {
-      c.fillStyle = '#efbd7d'; c.textAlign = 'center'; c.fillText(steps[step], game.width / 2, y)
+    if (width < 520) {
+      c.fillStyle = '#efbd7d'; c.textAlign = 'center'; c.fillText(steps[step], view.x + width / 2, y)
     } else {
-      let x = 0
+      let x = view.x
       steps.forEach((text, i) => { c.fillStyle = i === step ? '#efbd7d' : '#6f8f8a'; c.fillText(text, x, y); x += c.measureText(text).width + 34 })
     }
     c.letterSpacing = '0px'

@@ -36,14 +36,22 @@ export function hudMargins(width: number): Margins {
 }
 
 /**
- * Title-screen pilot: chase a point just ahead on a circle around the nearest
- * sun, so the ship loops it and crosses its own wake like a player would.
+ * Title-screen pilot: picks the nearest sun and keeps it until it is captured,
+ * chasing a point just ahead on a circle around it so the ship loops the sun
+ * and crosses its own wake like a player would.
  */
-export function autopilot(game: OrbitGame): Controls {
-  const sun = game.suns.reduce((best, s) => distance(s, game.ship) < distance(best, game.ship) ? s : best)
-  const around = Math.atan2(game.ship.y - sun.y, game.ship.x - sun.x) - .9
-  const reach = game.radius * 1.3
-  return { turn: 0, target: { x: sun.x + Math.cos(around) * reach, y: sun.y + Math.sin(around) * reach }, boost: false }
+export function createAutopilot() {
+  let targetId = -1
+  return (game: OrbitGame): Controls => {
+    let sun = game.suns.find(s => s.id === targetId)
+    if (!sun) {
+      sun = game.suns.reduce((best, s) => distance(s, game.ship) < distance(best, game.ship) ? s : best)
+      targetId = sun.id
+    }
+    const around = Math.atan2(game.ship.y - sun.y, game.ship.x - sun.x) - .9
+    const reach = game.radius * 1.3
+    return { turn: 0, target: { x: sun.x + Math.cos(around) * reach, y: sun.y + Math.sin(around) * reach }, boost: false }
+  }
 }
 
 function distance(a: Point, b: Point) { return Math.hypot(a.x - b.x, a.y - b.y) }

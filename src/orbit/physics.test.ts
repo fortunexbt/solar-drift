@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { OrbitGame, createAutopilot, hudMargins, loopScore, nearestPoint, pointInPolygon, polygonArea } from './physics'
+import { MAX_CHAIN, OrbitGame, createAutopilot, hudMargins, loopScore, nearestPoint, pointInPolygon, polygonArea, seededRandom } from './physics'
 
 describe('orbit geometry', () => {
   const square = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }]
@@ -87,5 +87,44 @@ describe('playable orbit rules', () => {
     const pilot = createAutopilot()
     for (let i = 0; i < 60 * 20; i++) game.step(1 / 60, pilot(game))
     expect(game.loops).toBeGreaterThanOrEqual(3)
+  })
+  it('keeps raising difficulty through a whole run, past 15 and 34 captures', () => {
+    const game = new OrbitGame(1280, 800, () => .2)
+    const at = (captured: number) => { game.captured = captured; return { speed: game.hazardSpeed, count: game.hazardTarget } }
+    for (const [from, to] of [[0, 14], [14, 15], [15, 33], [33, 34], [34, 45], [45, 80]]) {
+      expect(at(to).speed).toBeGreaterThan(at(from).speed)
+    }
+    for (const [from, to] of [[0, 3], [14, 15], [15, 18], [33, 36], [36, 45]]) {
+      expect(at(to).count).toBeGreaterThan(at(from).count)
+    }
+  })
+  it('speeds up hazards already on the field as captures mount', () => {
+    const game = new OrbitGame(1280, 800, () => .2)
+    game.started = true
+    const before = game.hazards[0].speed
+    game.captured = 20
+    game.step(1 / 60, { turn: 0, target: null, boost: false })
+    expect(game.hazards[0].speed).toBeGreaterThan(before)
+  })
+  it('reports the capped chain that scoring uses', () => {
+    const game = new OrbitGame(800, 420, () => .2, { top: 0, bottom: 0 })
+    game.hazards = []
+    const pilot = createAutopilot()
+    for (let i = 0; i < 60 * 20 && !game.loops; i++) {
+      game.combo = 12; game.lastCapture = game.elapsed
+      game.step(1 / 60, pilot(game))
+    }
+    expect(game.combo).toBeGreaterThan(MAX_CHAIN)
+    expect(game.bestCombo).toBe(MAX_CHAIN)
+  })
+  it('plays the same run for the same seed and a different one for another', () => {
+    const fly = (seed: number) => {
+      const game = new OrbitGame(800, 420, seededRandom(seed), { top: 0, bottom: 0 })
+      const pilot = createAutopilot()
+      for (let i = 0; i < 60 * 30; i++) game.step(1 / 60, pilot(game))
+      return JSON.stringify({ score: game.score, captured: game.captured, suns: game.suns, hazards: game.hazards, ship: game.ship })
+    }
+    expect(fly(12345)).toBe(fly(12345))
+    expect(fly(12345)).not.toBe(fly(54321))
   })
 })

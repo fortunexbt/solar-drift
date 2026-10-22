@@ -1,5 +1,5 @@
 import { OrbitAudio } from './audio'
-import { OrbitGame, createAutopilot, type Controls, type Point } from './physics'
+import { MAX_CHAIN, OrbitGame, createAutopilot, seededRandom, type Controls, type Point } from './physics'
 import { OrbitRenderer, type View } from './render'
 import './style.css'
 
@@ -14,7 +14,15 @@ const audio = new OrbitAudio()
 const controls: Controls = { turn: 0, target: null, boost: false }
 const keys = new Set<string>()
 const guide = element<HTMLDialogElement>('guide')
-let game = new OrbitGame(innerWidth, innerHeight)
+const MAX_SEED = 2147483646
+/** A valid `?seed=` from a shared link, or null for a fresh random run. */
+function seedFromLink(): number | null {
+  const value = Number(new URLSearchParams(location.search).get('seed'))
+  return Number.isInteger(value) && value >= 1 && value <= MAX_SEED ? value : null
+}
+let linkSeed = seedFromLink()
+let runSeed = linkSeed ?? 1 + Math.floor(Math.random() * MAX_SEED)
+let game = new OrbitGame(innerWidth, innerHeight, seededRandom(runSeed))
 let demo = game
 let pilot = createAutopilot()
 let demoView: View | null = null
@@ -43,10 +51,6 @@ function feedback(text: string, duration = 2200) {
   feedbackText = text; feedbackUntil = performance.now() + duration
   element('feedback').textContent = text; element('feedback').classList.add('visible')
 }
-/** Seeded so every visitor sees the same short lesson flight. */
-function seeded(seed: number) {
-  return () => (seed = seed * 16807 % 2147483647) / 2147483647
-}
 /** Fit the title-screen demo into the space the welcome copy leaves free. */
 function newDemo() {
   const w = innerWidth, h = innerHeight
@@ -58,7 +62,7 @@ function newDemo() {
   const scale = w >= 700 ? 1.5 : 1.25
   demoView = width >= 240 && height >= 170 && h >= 500 ? { ...area, scale } : null
   pilot = createAutopilot()
-  demo = new OrbitGame(Math.max(240, width) / scale, Math.max(170, height) / scale, seeded([7, 8, 10][demoRuns++ % 3]), { top: 0, bottom: 0 })
+  demo = new OrbitGame(Math.max(240, width) / scale, Math.max(170, height) / scale, seededRandom([7, 8, 10][demoRuns++ % 3]), { top: 0, bottom: 0 })
 }
 function resetControls() {
   keys.clear(); controls.turn = 0; controls.boost = false; controls.target = null; pointerSteering = false; turnTouch = 0; boostTouch = false
@@ -87,8 +91,8 @@ function drawRunMap() {
   element('map-caption').textContent = count ? `${count} ORBIT${count === 1 ? '' : 'S'} THAT CAUGHT LIGHT` : 'NO SUNS CAUGHT THIS RUN'
 }
 async function share() {
-  const url = location.origin + location.pathname
-  const text = `I collected ${game.score.toLocaleString()} light in Solar Drift: ${game.captured} sun${game.captured === 1 ? '' : 's'}, best chain ×${game.bestCombo}. Can you close a bigger orbit?`
+  const url = `${location.origin}${location.pathname}?seed=${runSeed}`
+  const text = `I collected ${game.score.toLocaleString()} light in Solar Drift: ${game.captured} sun${game.captured === 1 ? '' : 's'}, best chain ×${game.bestCombo}, seed ${runSeed}. Fly the same sky and close a bigger orbit.`
   if (navigator.share) {
     try { await navigator.share({ title: 'Solar Drift', text, url }) } catch (error) { if ((error as DOMException).name !== 'AbortError') throw error }
     return
@@ -128,16 +132,17 @@ function setMode(next: typeof mode, record = false) {
     element('result-title').innerHTML = game.score ? 'A little<br /><em>more light.</em>' : 'Find your<br /><em>first orbit.</em>'
     element('result-note').textContent = !game.score ? 'Hold the left arrow at the start. Circle the marked sun and meet your own wake.'
       : runSuns.length === game.history.length ? 'Try enclosing two suns in one orbit. Two together earn four times the light.'
-        : game.bestCombo < 4 ? 'Catch again within 9 seconds of the last capture to build the chain to ×4.' : 'Full chain. Next, try three suns in a single loop.'
+        : game.bestCombo < MAX_CHAIN ? 'Catch again within 9 seconds of the last capture to build the chain to ×4.' : 'Full chain. Next, try three suns in a single loop.'
     element('result-stats').hidden = false; element('run-record').hidden = false; element('share').hidden = !game.score; element('resume').hidden = true; element('restart').hidden = false
     drawRunMap()
-    element('final-score').textContent = game.score.toLocaleString(); element('final-suns').textContent = String(game.captured); element('final-chain').textContent = `×${game.bestCombo}`
+    element('final-score').textContent = game.score.toLocaleString(); element('final-suns').textContent = String(game.captured); element('final-chain').textContent = `×${game.bestCombo}`; element('final-seed').textContent = String(runSeed)
     element('restart').focus()
   }
   lastTime = performance.now(); updateUI()
 }
 async function start() {
-  game = new OrbitGame(innerWidth, innerHeight)
+  runSeed = linkSeed ?? 1 + Math.floor(Math.random() * MAX_SEED); linkSeed = null
+  game = new OrbitGame(innerWidth, innerHeight, seededRandom(runSeed))
   const currentRun = game
   runSuns = []; renderer.clearEffects()
   feedbackText = ''; feedbackUntil = 0; element('feedback').textContent = ''; element('feedback').classList.remove('visible')
@@ -156,7 +161,7 @@ function updateUI() {
   element('best').textContent = `PERSONAL BEST ${Math.max(best, game.score).toLocaleString()}`
   element('time').textContent = String(Math.ceil(game.remaining)).padStart(2, '0')
   element('time').style.color = game.remaining < 12 ? '#ecaa8b' : ''
-  element('combo').textContent = game.combo > 0 ? `×${Math.min(4, game.combo)}` : '—'
+  element('combo').textContent = game.combo > 0 ? `×${Math.min(MAX_CHAIN, game.combo)}` : '—'
   element('charge').style.transform = `scaleX(${game.charge / 100})`
   const mobile = innerWidth < 700 || matchMedia('(pointer: coarse)').matches
   element('instruction').innerHTML = game.captured === 0 ? (mobile ? 'Hold <kbd>↶</kbd> to launch your first orbit.' : 'Hold <kbd>←</kbd> to launch your first orbit.') : 'Two suns. One orbit. Four times the light.'

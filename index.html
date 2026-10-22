@@ -20,8 +20,8 @@
       <h1>SOLAR<br /><span>DRIFT</span><i aria-hidden="true">↗</i></h1>
       <p class="premise">Draw an orbit around a sun.<br />Cross your wake. Collect the light.</p>
       <button id="start" class="primary">Start a run <span aria-hidden="true">↗</span></button>
-      <p class="start-note">60 seconds. A little nerve. One more orbit.</p>
-      <div class="welcome-bottom"><span>DESIGNED TO BE PLAYED.</span><span>NO ACCOUNT · NO DOWNLOAD</span></div>
+      <p id="start-note" class="start-note">A 60-second run. Steer with the arrow keys, a drag, or the touch buttons.</p>
+      <div class="welcome-bottom"><span>SOUND OFF UNTIL YOU TURN IT ON</span><span>NO ACCOUNT · NO DOWNLOAD</span></div>
     </section>
     <section id="hud" class="hud" aria-label="Run status" hidden>
       <div class="score-block"><span class="micro-label">LIGHT COLLECTED</span><strong id="score">0000</strong><span id="best" class="best">PERSONAL BEST 0</span></div>
@@ -37,10 +37,11 @@
         <p id="result-label" class="eyebrow">FLIGHT RECORDED</p>
         <h2 id="result-title">A little<br /><em>more light.</em></h2>
         <div id="result-stats" class="result-stats"><div><strong id="final-score">0</strong><span>LIGHT COLLECTED</span></div><div><strong id="final-suns">0</strong><span>SUNS CAPTURED</span></div><div><strong id="final-chain">0</strong><span>BEST CHAIN</span></div></div>
+        <figure id="run-record" class="run-record"><svg id="run-map" role="img" aria-labelledby="map-caption" preserveAspectRatio="xMidYMid meet"></svg><figcaption id="map-caption">NO SUNS CAUGHT THIS RUN</figcaption></figure>
         <p id="result-note">Every orbit is another chance.</p>
         <button id="resume" class="primary" hidden>Resume flight <span>↗</span></button>
         <button id="restart" class="primary">Fly again <span>↗</span></button>
-        <button id="back" class="quiet-button">Back to the observatory</button>
+        <div class="result-actions"><button id="share" class="quiet-button" hidden>Share this run</button><button id="back" class="quiet-button">Back to the title screen</button></div>
       </div>
     </section>
     <dialog id="guide">

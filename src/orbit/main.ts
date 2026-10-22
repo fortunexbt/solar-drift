@@ -88,7 +88,7 @@ function drawRunMap() {
 }
 async function share() {
   const url = location.origin + location.pathname
-  const text = `I collected ${game.score.toLocaleString()} light in Solar Drift: ${game.captured} suns, best chain ×${game.bestCombo}. Can you close a bigger orbit?`
+  const text = `I collected ${game.score.toLocaleString()} light in Solar Drift: ${game.captured} sun${game.captured === 1 ? '' : 's'}, best chain ×${game.bestCombo}. Can you close a bigger orbit?`
   if (navigator.share) {
     try { await navigator.share({ title: 'Solar Drift', text, url }) } catch (error) { if ((error as DOMException).name !== 'AbortError') throw error }
     return

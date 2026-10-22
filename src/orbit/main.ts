@@ -103,7 +103,6 @@ function bump(id: string) {
 }
 function soundUI() {
   element('sound').innerHTML = `SOUND <span>${muted ? 'OFF' : 'ON'}</span>`
-  element('sound').setAttribute('aria-label', muted ? 'Turn sound on' : 'Turn sound off')
   element('sound').setAttribute('aria-pressed', String(!muted))
 }
 function setMode(next: typeof mode, record = false) {

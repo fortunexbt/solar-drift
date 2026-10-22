@@ -127,7 +127,9 @@ function setMode(next: typeof mode, record = false) {
   if (mode === 'ended') {
     element('result-label').textContent = record ? 'NEW PERSONAL BEST' : 'FLIGHT RECORDED'
     element('result-title').innerHTML = game.score ? 'A little<br /><em>more light.</em>' : 'Find your<br /><em>first orbit.</em>'
-    element('result-note').textContent = game.score ? 'Try enclosing two suns in one orbit. The reward grows with the risk.' : 'Hold the left arrow at the start. Circle the marked sun and meet your own wake.'
+    element('result-note').textContent = !game.score ? 'Hold the left arrow at the start. Circle the marked sun and meet your own wake.'
+      : runSuns.length === game.history.length ? 'Try enclosing two suns in one orbit. Two together earn four times the light.'
+        : game.bestCombo < 4 ? 'Catch again within 9 seconds of the last capture to build the chain to ×4.' : 'Full chain. Next, try three suns in a single loop.'
     element('result-stats').hidden = false; element('run-record').hidden = false; element('share').hidden = !game.score; element('resume').hidden = true; element('restart').hidden = false
     drawRunMap()
     element('final-score').textContent = game.score.toLocaleString(); element('final-suns').textContent = String(game.captured); element('final-chain').textContent = `×${game.bestCombo}`

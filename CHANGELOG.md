@@ -2,6 +2,24 @@
 
 All notable changes to Solar Drift are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses semantic versioning.
 
+## [Unreleased]
+
+### Added
+
+- A title-screen lesson flight: the real simulation, steered by a seeded pilot, loops and catches suns under a three-step caption.
+- Capture sparks and shock rings, a short shake on hits, and a score pulse on each catch.
+- A run map on the result screen, a "new personal best" call-out, and a share button.
+- Open Graph image, touch icon and an updated web manifest.
+
+### Changed
+
+- Sound now starts off and stays off until the player turns it on.
+- Raised low-contrast small text to meet WCAG AA.
+
+### Removed
+
+- Leftover Snake-era favicon, social preview and gameplay image.
+
 ## [1.0.0] - 2026-07-21
 
 ### Added

@@ -26,8 +26,16 @@ export function nearestPoint(p: Point, a: Point, b: Point): Point {
   return { x: a.x + dx * t, y: a.y + dy * t }
 }
 
+/** The scoring chain stops growing here; the result screen shows the same cap. */
+export const MAX_CHAIN = 4
+
 export function loopScore(count: number, combo: number): number {
-  return count * count * 100 * Math.min(4, Math.max(1, combo))
+  return count * count * 100 * Math.min(MAX_CHAIN, Math.max(1, combo))
+}
+
+/** Park-Miller generator: the same seed always yields the same sequence. */
+export function seededRandom(seed: number): () => number {
+  return () => (seed = seed * 16807 % 2147483647) / 2147483647
 }
 
 /** Space kept clear for the HUD above and the controls below the flight area. */
@@ -85,11 +93,14 @@ export class OrbitGame {
   private margins: Margins
   get speed() { return Math.max(92, Math.min(160, Math.min(this.width, this.height) * .23)) }
   get turnRate() { return 3.15 }
+  /** Red bodies move faster with every capture and never stop approaching `.72`. */
+  get hazardSpeed() { return this.speed * (.22 + .5 * this.captured / (this.captured + 30)) }
+  get hazardTarget() { return Math.min(16, 1 + Math.floor(this.captured / 3)) }
   get top() { return this.margins.top }
   get bottom() { return this.height - this.margins.bottom }
   get radius() { return this.speed / this.turnRate }
 
-  constructor(width: number, height: number, random: () => number = Math.random, margins = hudMargins(width)) {
+  constructor(width: number, height: number, random: () => number, margins = hudMargins(width)) {
     this.width = width; this.height = height; this.random = random; this.margins = margins
     const center = { x: width * .57, y: (this.top + this.bottom) / 2 }
     this.ship = { x: center.x + this.radius, y: center.y, angle: -Math.PI / 2, speed: this.speed }
@@ -123,7 +134,7 @@ export class OrbitGame {
 
   private spawnHazard() {
     const left = this.random() < .5
-    this.hazards.push({ x: left ? 35 : this.width - 35, y: this.top + 30 + this.random() * Math.max(20, this.bottom - this.top - 60), angle: left ? .35 : Math.PI + .35, speed: this.speed * (.22 + Math.min(.4, this.captured * .012)), radius: 13 })
+    this.hazards.push({ x: left ? 35 : this.width - 35, y: this.top + 30 + this.random() * Math.max(20, this.bottom - this.top - 60), angle: left ? .35 : Math.PI + .35, speed: this.hazardSpeed, radius: 13 })
   }
 
   resize(width: number, height: number, margins = hudMargins(width)) {
@@ -171,6 +182,7 @@ export class OrbitGame {
       this.ship.y = Math.max(this.top, Math.min(this.bottom, this.ship.y)); this.ship.angle = -this.ship.angle; hit = true
     }
     for (const hazard of this.hazards) {
+      hazard.speed = this.hazardSpeed
       hazard.x += Math.cos(hazard.angle) * hazard.speed * dt; hazard.y += Math.sin(hazard.angle) * hazard.speed * dt
       if (hazard.x < 22 || hazard.x > this.width - 22) { hazard.angle = Math.PI - hazard.angle; hazard.x = Math.max(22, Math.min(this.width - 22, hazard.x)) }
       if (hazard.y < this.top + 12 || hazard.y > this.bottom - 12) { hazard.angle = -hazard.angle; hazard.y = Math.max(this.top + 12, Math.min(this.bottom - 12, hazard.y)) }
@@ -198,12 +210,12 @@ export class OrbitGame {
           this.orbits.push({ points, age: 0, score, count, center })
           this.trail = []
           if (count) {
-            this.score += score; this.captured += count; this.loops++; this.lastCapture = this.elapsed; this.bestCombo = Math.max(this.bestCombo, this.combo)
+            this.score += score; this.captured += count; this.loops++; this.lastCapture = this.elapsed; this.bestCombo = Math.max(this.bestCombo, Math.min(MAX_CHAIN, this.combo))
             this.remaining = Math.min(90, this.remaining + count * 3); this.charge = Math.min(100, this.charge + count * 20)
             this.history.push(points)
             this.suns = this.suns.filter(s => !caught.includes(s))
             for (let j = 0; j < count; j++) this.spawnSun()
-            if (this.hazards.length < Math.min(6, 1 + Math.floor(this.captured / 3))) this.spawnHazard()
+            if (this.hazards.length < this.hazardTarget) this.spawnHazard()
             events.push({ type: 'capture', count, combo: this.combo, score, suns: caught.map(({ x, y }) => ({ x, y })) })
           } else events.push({ type: 'empty' })
           break

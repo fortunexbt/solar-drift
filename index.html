@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#080e17" />
-  <meta name="description" content="A small orbital arcade game. Loop your ship around a sun, cross your own wake to catch it, and chase a bigger score in 60-second runs." />
+  <meta name="description" content="A small orbital arcade game. Loop your ship around a sun, cross your own wake to catch it, and chase a bigger score. Each run starts with a minute and every sun you catch adds more." />
   <title>Solar Drift: an orbital arcade game</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
   <link rel="manifest" href="./site.webmanifest" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Solar Drift" />
-  <meta property="og:description" content="Loop a sun, cross your wake, catch the light. A 60-second orbital arcade game for phone and desktop." />
+  <meta property="og:description" content="Loop a sun, cross your wake, catch the light. An orbital arcade game for phone and desktop: start with a minute, earn more time with every sun." />
   <meta property="og:url" content="https://solar-drift-zeta.vercel.app/" />
   <meta property="og:image" content="https://solar-drift-zeta.vercel.app/og.png" />
   <meta property="og:image:width" content="1200" />
@@ -31,7 +31,7 @@
       <h1>SOLAR<br /><span>DRIFT</span><i aria-hidden="true">↗</i></h1>
       <p class="premise">Draw an orbit around a sun.<br />Cross your wake. Collect the light.</p>
       <button id="start" class="primary">Start a run <span aria-hidden="true">↗</span></button>
-      <p id="start-note" class="start-note">A 60-second run. Steer with the arrow keys, a drag, or the touch buttons.</p>
+      <p id="start-note" class="start-note">You start with 60 seconds and each sun adds 3 more. Steer with the arrow keys, a drag, or the touch buttons.</p>
       <div class="welcome-bottom"><span>SOUND OFF UNTIL YOU TURN IT ON</span><span>NO ACCOUNT · NO DOWNLOAD</span></div>
     </section>
     <section id="hud" class="hud" aria-label="Run status" hidden>
@@ -47,7 +47,7 @@
       <div class="result-panel">
         <p id="result-label" class="eyebrow">FLIGHT RECORDED</p>
         <h2 id="result-title">A little<br /><em>more light.</em></h2>
-        <div id="result-stats" class="result-stats"><div><strong id="final-score">0</strong><span>LIGHT COLLECTED</span></div><div><strong id="final-suns">0</strong><span>SUNS CAPTURED</span></div><div><strong id="final-chain">0</strong><span>BEST CHAIN</span></div></div>
+        <div id="result-stats" class="result-stats"><div><strong id="final-score">0</strong><span>LIGHT COLLECTED</span></div><div><strong id="final-suns">0</strong><span>SUNS CAPTURED</span></div><div><strong id="final-chain">0</strong><span>BEST CHAIN</span></div><div><strong id="final-seed">0</strong><span>SEED</span></div></div>
         <figure id="run-record" class="run-record"><svg id="run-map" role="img" aria-labelledby="map-caption" preserveAspectRatio="xMidYMid meet"></svg><figcaption id="map-caption">NO SUNS CAUGHT THIS RUN</figcaption></figure>
         <p id="result-note">Every orbit is another chance.</p>
         <button id="resume" class="primary" hidden>Resume flight <span>↗</span></button>

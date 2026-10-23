@@ -22,7 +22,7 @@ Once launched, you always move forward. Your wake lasts **7 seconds**: cross an 
 
 | What happens | What changes |
 | --- | --- |
-| Begin a flight | **60 seconds** on the clock |
+| Begin a flight | **60 seconds** on the clock, which is where a run starts and not a cap on its length |
 | Enclose suns in a loop | Collect light and **+3 seconds per sun**, up to 90 seconds remaining |
 | Capture again within 9 seconds | Grow the scoring chain, up to **×4** |
 | Close an empty orbit | Clear the loop and reset the chain |
@@ -87,10 +87,12 @@ This runs TypeScript checking, the Vitest suite, and a production build. The sui
 | [`src/orbit/style.css`](./src/orbit/style.css) · [`index.html`](./index.html) | Responsive interface, controls, guide, and run summaries |
 | [`src/orbit/physics.test.ts`](./src/orbit/physics.test.ts) | Geometry and gameplay checks |
 
-The runtime lives in `src/orbit/`. The title-screen demo is the real simulation, not a recording: it runs `OrbitGame` with a seeded random source and steers it with `createAutopilot()`.
+The runtime lives in `src/orbit/`. The title-screen demo is the real simulation, not a recording: it runs `OrbitGame` with a seeded random source (`seededRandom`) and steers it with `createAutopilot()`.
 
 ## Limits
 
+- A run lasts as long as you keep catching suns: the clock starts at 60 seconds and each sun adds 3, up to 90 on the clock. Difficulty keeps rising with every capture.
+- Every run has a seed, shown on the result screen and added to the share link as `?seed=`. The same seed and window size give the same suns and red bodies, so a shared link replays the same sky.
 - Scores live in this browser only. There is no online leaderboard, so sharing sends a line of text and a link, not a verifiable score.
 - Phones held in landscape at under 500px tall skip the title-screen demo; the game itself still plays.
 - With reduced motion turned on, the lesson flight still plays (it is the explanation), but sparks, screen shake and star twinkle are off.

@@ -39,7 +39,6 @@ let lastTime = performance.now()
 let lastUI = 0
 let raf = 0
 let guideWasPlaying = false
-let firstStart = true
 let pointerSteering = false
 let turnTouch = 0
 let boostTouch = false
@@ -47,16 +46,16 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)')
 const listeners = new AbortController()
 const options = { signal: listeners.signal }
 
-function feedback(text: string, duration = 2200) {
+function feedback(text: string, duration = 2200, tone: 'capture' | 'empty' | 'hit' | 'near' = 'capture') {
   feedbackText = text; feedbackUntil = performance.now() + duration
-  element('feedback').textContent = text; element('feedback').classList.add('visible')
+  element('feedback').textContent = text; element('feedback').dataset.tone = tone; element('feedback').classList.add('visible')
 }
 /** Fit the title-screen demo into the space the welcome copy leaves free. */
 function newDemo() {
   const w = innerWidth, h = innerHeight
-  const title = element('welcome').querySelector('h1')!.getBoundingClientRect()
+  const copy = element('welcome').getBoundingClientRect()
   const copyBottom = Math.max(...['start', 'start-note'].map(id => element(id).getBoundingClientRect().bottom))
-  const area = w >= 700 ? { x: Math.max(title.right + 80, w * .45), y: 96 } : { x: 20, y: copyBottom + 24 }
+  const area = w >= 700 ? { x: Math.max(copy.right + 60, w * .45), y: 96 } : { x: 20, y: copyBottom + 24 }
   const width = w - area.x - (w >= 700 ? 40 : 20), height = h - area.y - (w >= 700 ? 120 : 96)
   // Drawn larger than play scale so the lesson reads at a glance.
   const scale = w >= 700 ? 1.5 : 1.25
@@ -88,7 +87,7 @@ function drawRunMap() {
   const suns = runSuns.map(p => `<circle cx="${Math.round(p.x)}" cy="${Math.round(p.y)}" r="${(span / 110).toFixed(1)}" />`)
   map.innerHTML = loops.join('') + suns.join('')
   const count = game.history.length
-  element('map-caption').textContent = count ? `${count} ORBIT${count === 1 ? '' : 'S'} THAT CAUGHT LIGHT` : 'NO SUNS CAUGHT THIS RUN'
+  element('map-caption').textContent = count === 1 ? 'The loop that caught light this run' : count ? `The ${count} loops that caught light this run` : 'No suns caught this run'
 }
 async function share() {
   const url = `${location.origin}${location.pathname}?seed=${runSeed}`
@@ -103,39 +102,40 @@ async function share() {
 }
 function bump(id: string) {
   if (reduced.matches) return
-  element(id).animate([{ transform: 'scale(1.14)', color: '#ffe0af' }, { transform: 'scale(1)' }], { duration: 320, easing: 'cubic-bezier(.23, 1, .32, 1)' })
+  element(id).animate([{ transform: 'scale(1.18)', color: '#ffe3b0' }, { transform: 'scale(1)' }], { duration: 420, delay: 380, easing: 'cubic-bezier(.23, 1, .32, 1)' })
 }
 function soundUI() {
-  element('sound').innerHTML = `SOUND <span>${muted ? 'OFF' : 'ON'}</span>`
+  element('sound').querySelector('span')!.textContent = muted ? 'Sound off' : 'Sound on'
   element('sound').setAttribute('aria-pressed', String(!muted))
 }
 function setMode(next: typeof mode, record = false) {
-  mode = next; document.body.classList.toggle('playing', mode === 'playing')
+  mode = next
+  for (const name of ['ready', 'playing', 'paused', 'ended']) document.body.classList.toggle(name, mode === name)
   element('welcome').hidden = mode !== 'ready'
   element('hud').hidden = mode === 'ready'
   element('pause').hidden = mode !== 'playing'
   element('overlay').hidden = mode !== 'paused' && mode !== 'ended'
   element('footer').hidden = mode !== 'ready'
-  element('flight-help').hidden = mode !== 'playing'
-  element('desktop-controls').hidden = mode !== 'playing'
   element('touch-controls').hidden = mode !== 'playing'
   if (mode !== 'playing') { resetControls(); audio.setMotion(0, false); element('feedback').classList.remove('visible'); element('feedback').textContent = ''; feedbackText = ''; feedbackUntil = 0 }
   if (mode === 'paused') {
-    element('result-label').textContent = 'FLIGHT ON HOLD'
-    element('result-title').innerHTML = 'Take your<br /><em>time.</em>'
+    element('result-label').textContent = ''
+    element('result-title').textContent = 'Paused'
     element('result-note').textContent = 'Your orbit is right where you left it.'
     element('result-stats').hidden = true; element('run-record').hidden = true; element('share').hidden = true; element('resume').hidden = false; element('restart').hidden = true
     element('resume').focus()
   }
   if (mode === 'ended') {
-    element('result-label').textContent = record ? 'NEW PERSONAL BEST' : 'FLIGHT RECORDED'
-    element('result-title').innerHTML = game.score ? 'A little<br /><em>more light.</em>' : 'Find your<br /><em>first orbit.</em>'
+    element('result-label').textContent = record && game.score ? 'A new best on this browser.' : best ? `Your best is ${best.toLocaleString()}.` : ''
+    element('result-title').innerHTML = `${game.score.toLocaleString()}<small>light</small>`
     element('result-note').textContent = !game.score ? 'Hold the left arrow at the start. Circle the marked sun and meet your own wake.'
-      : runSuns.length === game.history.length ? 'Try enclosing two suns in one orbit. Two together earn four times the light.'
+      : runSuns.length === game.history.length ? 'Next time, fit two suns in one loop. Together they earn four times the light.'
         : game.bestCombo < MAX_CHAIN ? 'Catch again within 9 seconds of the last capture to build the chain to ×4.' : 'Full chain. Next, try three suns in a single loop.'
     element('result-stats').hidden = false; element('run-record').hidden = false; element('share').hidden = !game.score; element('resume').hidden = true; element('restart').hidden = false
     drawRunMap()
-    element('final-score').textContent = game.score.toLocaleString(); element('final-suns').textContent = String(game.captured); element('final-chain').textContent = `×${game.bestCombo}`; element('final-seed').textContent = String(runSeed)
+    element('result-stats').innerHTML = game.captured
+      ? `You caught <strong>${game.captured}</strong> sun${game.captured === 1 ? '' : 's'} with a best chain of <strong>×${game.bestCombo}</strong>. This sky was seed <strong>${runSeed}</strong>.`
+      : `This sky was seed <strong>${runSeed}</strong>.`
     element('restart').focus()
   }
   lastTime = performance.now(); updateUI()
@@ -150,22 +150,24 @@ async function start() {
   await audio.unlock()
   if (game !== currentRun || mode !== 'playing') return
   audio.start()
-  if (firstStart && game.captured === 0) feedback('CIRCLE THE MARKED SUN. CROSS YOUR WAKE.', 4200)
-  firstStart = false
   canvas.focus({ preventScroll: true })
 }
 function pause() { if (mode === 'playing') setMode('paused') }
 function resume() { if (mode === 'paused') { setMode('playing'); canvas.focus({ preventScroll: true }) } }
 function updateUI() {
-  element('score').textContent = String(game.score).padStart(4, '0')
-  element('best').textContent = `PERSONAL BEST ${Math.max(best, game.score).toLocaleString()}`
-  element('time').textContent = String(Math.ceil(game.remaining)).padStart(2, '0')
-  element('time').style.color = game.remaining < 12 ? '#ecaa8b' : ''
-  element('combo').textContent = game.combo > 0 ? `×${Math.min(MAX_CHAIN, game.combo)}` : '—'
-  element('charge').style.transform = `scaleX(${game.charge / 100})`
+  element('score').textContent = game.score.toLocaleString()
+  element('best').textContent = `Best ${Math.max(best, game.score).toLocaleString()}`
+  element('time').textContent = String(Math.ceil(game.remaining))
+  element('charge-text').textContent = String(Math.round(game.charge))
+  const combo = element('combo')
+  combo.hidden = game.combo < 2
+  combo.textContent = `×${Math.min(MAX_CHAIN, game.combo)} chain`
+  combo.style.setProperty('--window', String(Math.max(0, 1 - (game.elapsed - game.lastCapture) / 9)))
+  element('flight-help').hidden = mode !== 'playing' || game.captured >= 2
+  element('desktop-controls').hidden = mode !== 'playing' || game.captured >= 2
   const mobile = innerWidth < 700 || matchMedia('(pointer: coarse)').matches
-  element('instruction').innerHTML = game.captured === 0 ? (mobile ? 'Hold <kbd>↶</kbd> to launch your first orbit.' : 'Hold <kbd>←</kbd> to launch your first orbit.') : 'Two suns. One orbit. Four times the light.'
-  element('sub-instruction').textContent = game.captured === 0 ? 'Cross your wake to collect it. Keep the sun inside.' : 'Each sun adds 3s. Red bodies and edges cost 5s.'
+  element('instruction').innerHTML = game.captured === 0 ? (mobile ? 'Hold <kbd>↶</kbd> to launch your first orbit.' : 'Hold <kbd>←</kbd> to launch your first orbit.') : 'Two suns in one loop earn four times the light.'
+  element('sub-instruction').textContent = game.captured === 0 ? 'Cross your wake to collect it. Keep the sun inside.' : 'Each sun adds 3\u00a0s. Red bodies and the edges cost 5\u00a0s.'
   if (feedbackText && performance.now() > feedbackUntil) { element('feedback').classList.remove('visible'); feedbackText = '' }
 }
 function frame(now: number) {
@@ -176,10 +178,17 @@ function frame(now: number) {
     controls.boost = boostTouch || keys.has(' ') || keys.has('Shift') || keys.has('ArrowUp') || keys.has('w')
     const events = game.step(dt, controls)
     for (const event of events) {
-      if (event.type === 'capture') { audio.capture(event.count, event.combo); renderer.burst(event.suns, reduced.matches); runSuns.push(...event.suns); bump('score'); bump('time'); feedback(`${event.count} SUN${event.count === 1 ? '' : 'S'} CAPTURED  ·  +${event.score} LIGHT  ·  +${event.count * 3}s`); if (navigator.vibrate) navigator.vibrate(18) }
-      else if (event.type === 'empty') feedback('EMPTY ORBIT. KEEP A SUN INSIDE.', 1700)
-      else if (event.type === 'hit') { audio.hit(); renderer.shake(); feedback('WAKE LOST  ·  −5s', 1800); if (navigator.vibrate) navigator.vibrate([15, 35, 20]) }
-      else if (event.type === 'near') { audio.nearMiss(); feedback('CLOSE PASS  ·  SURGE RECHARGED', 1200) }
+      if (event.type === 'capture') {
+        audio.capture(event.count, event.combo); runSuns.push(...event.suns)
+        const score = element('score').getBoundingClientRect()
+        renderer.burst(event.suns, reduced.matches, { x: score.left + score.width / 2, y: score.top + score.height / 2 }); bump('score')
+        const chain = Math.min(MAX_CHAIN, event.combo)
+        feedback(`${event.count === 1 ? 'Sun' : `${event.count} suns`} captured${chain > 1 ? `, chain ×${chain}` : ''}`)
+        if (navigator.vibrate) navigator.vibrate(18)
+      }
+      else if (event.type === 'empty') feedback('Empty loop. Keep a sun inside.', 1700, 'empty')
+      else if (event.type === 'hit') { audio.hit(); renderer.shake(); feedback('Wake lost, 5 seconds gone', 1800, 'hit'); if (navigator.vibrate) navigator.vibrate([15, 35, 20]) }
+      else if (event.type === 'near') { audio.nearMiss(); renderer.ping(game.ship); feedback('Close pass, surge recharged', 1200, 'near') }
       else if (event.type === 'end') { audio.end(); setMode('ended', saveBest()) }
     }
     audio.setMotion(game.ship.speed / game.speed, controls.boost && game.charge > 2)

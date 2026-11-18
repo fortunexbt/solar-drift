@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#080e17" />
+  <meta name="theme-color" content="#06121a" />
   <meta name="description" content="A small orbital arcade game. Loop your ship around a sun, cross your own wake to catch it, and chase a bigger score. Each run starts with a minute and every sun you catch adds more." />
   <title>Solar Drift: an orbital arcade game</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
@@ -16,55 +16,60 @@
   <meta property="og:image" content="https://solar-drift-zeta.vercel.app/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="The Solar Drift title screen, with a ship looping a sun and the three-step lesson underneath." />
+  <meta property="og:image:alt" content="The Solar Drift title screen, with a ship looping a sun beside the title." />
   <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body>
   <canvas id="space" aria-label="Solar Drift flight area. Steer left or right to draw a loop around a sun, then cross your trail to collect it."></canvas>
   <header class="masthead">
-    <a class="wordmark" href="./" aria-label="Solar Drift home"><svg viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="18" rx="16" ry="9" transform="rotate(-35 18 18)"/><circle cx="18" cy="18" r="3"/></svg><span>SOLAR DRIFT</span></a>
-    <div class="header-actions"><button id="sound" aria-pressed="false">SOUND <span>OFF</span></button><button id="pause" hidden>PAUSE <kbd aria-hidden="true">II</kbd></button><button id="guide-toggle" aria-label="How to play">?</button></div>
+    <a class="wordmark" href="./" aria-label="Solar Drift home"><svg viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="18" rx="16" ry="9" transform="rotate(-35 18 18)"/><circle cx="18" cy="18" r="3.4"/></svg><span>Solar Drift</span></a>
+    <div class="header-actions">
+      <button id="sound" class="chip" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="speaker" d="M3 8h3l4-3.5v11L6 12H3z"/><path class="waves" d="M13 7.2a4 4 0 0 1 0 5.6M15.2 5a7 7 0 0 1 0 10"/><path class="cross" d="M13 8l4 4m0-4-4 4"/></svg><span>Sound off</span></button>
+      <button id="pause" class="chip" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10M13 5v10"/></svg><span>Pause</span></button>
+      <button id="guide-toggle" class="chip round" aria-label="How to play">?</button>
+    </div>
   </header>
   <main>
     <section id="welcome" class="welcome">
-      <p class="eyebrow"><span class="status-dot"></span> AN ORBITAL ARCADE / 01</p>
-      <h1>SOLAR<br /><span>DRIFT</span><i aria-hidden="true">↗</i></h1>
-      <p class="premise">Draw an orbit around a sun.<br />Cross your wake. Collect the light.</p>
-      <button id="start" class="primary">Start a run <span aria-hidden="true">↗</span></button>
-      <p id="start-note" class="start-note">You start with 60 seconds and each sun adds 3 more. Steer with the arrow keys, a drag, or the touch buttons.</p>
-      <div class="welcome-bottom"><span>SOUND OFF UNTIL YOU TURN IT ON</span><span>NO ACCOUNT · NO DOWNLOAD</span></div>
+      <h1>Solar Drift</h1>
+      <p class="premise">Loop your ship around a sun and cross your own wake. Everything inside the loop is yours.</p>
+      <button id="start" class="primary">Start a run</button>
+      <p id="start-note" class="start-note">A minute on the clock, three more seconds for every sun. Steer with the arrow keys, a drag, or the touch buttons.</p>
     </section>
     <section id="hud" class="hud" aria-label="Run status" hidden>
-      <div class="score-block"><span class="micro-label">LIGHT COLLECTED</span><strong id="score">0000</strong><span id="best" class="best">PERSONAL BEST 0</span></div>
-      <div class="run-readout"><div class="time-block"><span class="micro-label">TIME LEFT</span><strong><span id="time">60</span><small>s</small></strong></div><div class="combo-block"><span class="micro-label">ORBIT CHAIN</span><strong id="combo">—</strong></div></div>
-      <div class="charge-block"><span>SURGE</span><i><b id="charge"></b></i></div>
+      <p class="score-line"><strong id="score">0</strong> <span>light</span></p>
+      <p class="hud-sub"><span id="combo" class="chain" hidden></span><span id="best" class="best">Best 0</span></p>
+      <p class="sr-only">Time left <span id="time">60</span> seconds. Surge <span id="charge-text">100</span> percent.</p>
     </section>
     <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
     <div id="flight-help" class="flight-help" hidden><span id="instruction">Hold <kbd>←</kbd> to circle your first sun.</span><small id="sub-instruction">Close your wake to collect it. Keep the sun inside.</small></div>
-    <div id="desktop-controls" class="desktop-controls" hidden><span><kbd>←</kbd><kbd>→</kbd> STEER</span><span><kbd>SPACE</kbd> SURGE</span><span><kbd>ESC</kbd> PAUSE</span></div>
-    <div id="touch-controls" class="touch-controls" hidden><button id="left" aria-label="Steer left">↶</button><button id="boost">SURGE <span>↑</span></button><button id="right" aria-label="Steer right">↷</button></div>
+    <div id="desktop-controls" class="desktop-controls" hidden><span><kbd>←</kbd><kbd>→</kbd> steer</span><span><kbd>Space</kbd> surge</span><span><kbd>Esc</kbd> pause</span></div>
+    <div id="touch-controls" class="touch-controls" hidden><button id="left" aria-label="Steer left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 19v-6a5 5 0 0 0-5-5H6m4-4L6 8l4 4"/></svg></button><button id="boost">Surge</button><button id="right" aria-label="Steer right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 19v-6a5 5 0 0 1 5-5h6m-4-4 4 4-4 4"/></svg></button></div>
     <section id="overlay" class="overlay" hidden>
       <div class="result-panel">
-        <p id="result-label" class="eyebrow">FLIGHT RECORDED</p>
-        <h2 id="result-title">A little<br /><em>more light.</em></h2>
-        <div id="result-stats" class="result-stats"><div><strong id="final-score">0</strong><span>LIGHT COLLECTED</span></div><div><strong id="final-suns">0</strong><span>SUNS CAPTURED</span></div><div><strong id="final-chain">0</strong><span>BEST CHAIN</span></div><div><strong id="final-seed">0</strong><span>SEED</span></div></div>
-        <figure id="run-record" class="run-record"><svg id="run-map" role="img" aria-labelledby="map-caption" preserveAspectRatio="xMidYMid meet"></svg><figcaption id="map-caption">NO SUNS CAUGHT THIS RUN</figcaption></figure>
-        <p id="result-note">Every orbit is another chance.</p>
-        <button id="resume" class="primary" hidden>Resume flight <span>↗</span></button>
-        <button id="restart" class="primary">Fly again <span>↗</span></button>
-        <div class="result-actions"><button id="share" class="quiet-button" hidden>Share this run</button><button id="back" class="quiet-button">Back to the title screen</button></div>
+        <h2 id="result-title">Paused</h2>
+        <p id="result-label" class="result-label"></p>
+        <p id="result-stats" class="result-stats"></p>
+        <figure id="run-record" class="run-record"><svg id="run-map" role="img" aria-labelledby="map-caption" preserveAspectRatio="xMidYMid meet"></svg><figcaption id="map-caption">No suns caught this run</figcaption></figure>
+        <p id="result-note" class="result-note">Your orbit is right where you left it.</p>
+        <div class="result-actions">
+          <button id="resume" class="primary" hidden>Resume flight</button>
+          <button id="restart" class="primary">Fly again</button>
+          <button id="share" class="quiet-button" hidden>Share this run</button>
+          <button id="back" class="quiet-button">Back to the title screen</button>
+        </div>
       </div>
     </section>
-    <dialog id="guide">
+    <dialog id="guide" aria-labelledby="guide-title">
       <form method="dialog"><button class="close-guide" aria-label="Close instructions">×</button></form>
-      <p class="eyebrow">A FIELD GUIDE</p><h2>Make an orbit.<br /><em>Keep the light.</em></h2>
-      <div class="guide-orbit" aria-hidden="true"><svg viewBox="0 0 320 140"><ellipse cx="160" cy="70" rx="110" ry="45" transform="rotate(-12 160 70)"/><circle cx="135" cy="69" r="9"/><circle cx="196" cy="75" r="6"/><path d="M267 39l-15-8 4 11-8 7z"/></svg></div>
-      <ol><li><strong>Curve around a sun.</strong> Hold left/right or drag on the flight area to steer. You always move forward.</li><li><strong>Cross your own wake.</strong> The loop captures the suns inside. Two suns together earn four times the light.</li><li><strong>Keep going.</strong> Each sun adds 3 seconds. Capture again within 9 seconds to grow your chain, up to ×4.</li></ol>
-      <p class="guide-warning">Red bodies and the edge cost 5 seconds. Near misses recharge your surge. Hold Space or Surge for speed and wider orbits.</p>
-      <form method="dialog"><button class="primary">Got it <span>↗</span></button></form>
+      <h2 id="guide-title">How to fly</h2>
+      <div class="guide-orbit" aria-hidden="true"><svg viewBox="0 0 320 120"><path class="guide-wake" d="M70 96C40 76 52 30 112 22c70-9 140 4 150 34s-50 52-120 50c-44-1-74-14-80-36"/><circle cx="140" cy="62" r="7"/><circle cx="196" cy="58" r="5"/><path class="guide-ship" d="M62 70l14-9-2 11-11 7z"/></svg></div>
+      <ol><li><strong>Curve around a sun.</strong> Hold left or right, or drag on the flight area, to steer. You always move forward.</li><li><strong>Cross your own wake.</strong> The loop captures every sun inside it. Two suns in one loop earn four times the light.</li><li><strong>Keep going.</strong> Each sun adds 3 seconds. Capture again within 9 seconds to grow your chain, up to ×4.</li></ol>
+      <p class="guide-warning">Red bodies and the edges cost 5 seconds. Near misses recharge your surge. Hold Space or Surge for speed and wider orbits.</p>
+      <form method="dialog"><button class="primary">Got it</button></form>
     </dialog>
   </main>
-  <footer id="footer"><span>A SMALL GAME BY FORTUNE</span><span>HEADPHONES RECOMMENDED <i>↗</i></span></footer>
+  <footer id="footer"><span>Made by Fortune. Sound stays off until you turn it on.</span></footer>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
